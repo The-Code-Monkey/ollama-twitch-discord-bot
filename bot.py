@@ -83,26 +83,28 @@ async def on_message(message):
     if message.author == discord_bot.user or not message.content.startswith(BOT_PREFIX):
         return
     
-    # Extract command token
     parts = message.content[len(BOT_PREFIX):].strip().split(" ", 1)
     cmd_name = parts[0].lower()
     user_args = parts[1] if len(parts) > 1 else ""
     
     config = load_command_config(cmd_name)
     if not config:
-        return  # Command not found in commands.json
+        return
     
-    # Enforce Cooldown
     if not check_cooldown("discord", cmd_name, config.get("timeout", 0)):
-        return  # Silently ignore if on cooldown
+        return  
         
-    # Note: Checking Twitch Sub status inside Discord requires complex linking. 
-    # For security and simplicity, we bypass 'isSub' constraints on Discord, or you can restrict it to a specific Discord Role if desired.
+    # Get Discord display name (e.g., "JohnDoe")
+    username = message.author.display_name
     
-    # Process with isolated prompt
-    response = await ask_isolated_qwen(user_args or cmd_name, config.get("required", []))
+    response = await ask_isolated_qwen(username, user_args or cmd_name, config.get("required", []))
+    
     if response:
-        await message.channel.send(response)
+        # If the AI forgot to include the username, we can enforce a mention at the start
+        if username not in response and message.author.name wilderness not in response:
+            await message.channel.send(f"{message.author.mention} {response}")
+        else:
+            await message.channel.send(response)
 
 # --- TWITCH BOT ---
 class TwitchBot(twitch_commands.Bot):
