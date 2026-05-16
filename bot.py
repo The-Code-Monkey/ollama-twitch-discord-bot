@@ -126,20 +126,26 @@ class TwitchBot(twitch_commands.Bot):
         if not config:
             return
             
-        # Check Twitch Subscription constraint
         if config.get("isSub", False):
-            # Check if user is a subscriber or the broadcaster
             if not (message.author.is_subscriber or message.author.is_mod or 'badges' in message.tags and 'broadcaster' in message.tags['badges']):
                 await message.channel.send(f"@{message.author.name}, that command is reserved for channel subscribers!")
                 return
 
-        # Enforce Cooldown
         if not check_cooldown("twitch", cmd_name, config.get("timeout", 0)):
             return 
             
-        response = await ask_isolated_qwen(user_args or cmd_name, config.get("required", []))
+        # Get Twitch chat username
+        username = f"@{message.author.name}"
+        
+        response = await ask_isolated_qwen(username, user_args or cmd_name, config.get("required", []))
+        
         if response:
-            await message.channel.send(f"@{message.author.name} {response}")
+            # Enforce the twitch mention if the AI missed it in its generation
+            if username not in response:
+                await message.channel.send(f"{username} {response}")
+            else:
+                await message.channel.send(response)
+                
 
 twitch_bot = TwitchBot()
 
