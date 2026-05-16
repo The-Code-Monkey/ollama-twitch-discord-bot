@@ -42,17 +42,28 @@ def check_cooldown(platform: str, command_name: str, timeout_seconds: int) -> bo
     COOLDOWN_TRACKER[key] = current_time
     return True
 
-async def ask_isolated_qwen(username: str, user_prompt: str, required_info: list) -> str:
-    """
-    Sends ONLY the user text, username, and required variables to the AI.
-    """
-    instructions = (
-        f"You are a helpful chat bot. You are talking to a user named '{username}'. "
-        f"Please address them by their name or tag them naturally in your response.\n\n"
-        "CRITICAL RULE: You MUST accurately include the following pieces of information "
-        f"somewhere in your response text: {', '.join(required_info)}\n\n"
-        f"User request: {user_prompt}"
-    )
+async def ask_isolated_qwen(username: str, user_prompt: str, required_info: list, history: list = None, is_welcome: bool = False) -> str:
+    history_context = ""
+    if history:
+        history_context = f"Here is the recent message history from this user for context:\n" + "\n".join(history) + "\n\n"
+
+    if is_welcome:
+        instructions = (
+            f"You are a welcoming live stream chat bot. A user named '{username}' just followed the channel!\n"
+            f"Write a warm, enthusiastic, and highly personalized welcome message to them. "
+            f"If they have chatted previously, use their history context to make it unique.\n\n"
+            f"{history_context}"
+            f"Keep the welcome concise (under 2 sentences) so it fits perfectly in live stream chat."
+        )
+    else:
+        instructions = (
+            f"You are a helpful chat bot. You are talking to a user named '{username}'.\n"
+            "Analyze their message history (if provided) to personalize your response.\n\n"
+            f"{history_context}"
+            "CRITICAL RULE: You MUST accurately include the following information "
+            f"somewhere in your final text: {', '.join(required_info)}\n\n"
+            f"User request: {user_prompt}"
+        )
     
     payload = {
         "model": MODEL_NAME,
