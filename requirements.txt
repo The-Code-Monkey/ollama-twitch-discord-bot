@@ -1,0 +1,10 @@
+# --- Twitch API & Bot Framework ---
+twitchio=2.9.0
+
+# --- HTTP Client for Ollama API ---
+aiohttp=3.11.0
+
+# --- Environment Variable Management ---
+python-dotenv=1.0.1
+
+# --- Utilities ---
